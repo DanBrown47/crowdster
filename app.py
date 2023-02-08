@@ -1,9 +1,14 @@
-
 from flask import Flask, request, Response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_bcrypt import Bcrypt
 from sqlalchemy.exc import IntegrityError
 from marshmallow import Schema, fields
+import sqlalchemy
+import os
+import datetime
+import jwt
+from dotenv import load_dotenv
+
 
 app = Flask(__name__)
 # CORS(app)
@@ -11,7 +16,9 @@ bcrypt = Bcrypt(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY']='Lolalolalolla'
 db = SQLAlchemy(app)
+load_dotenv()
 
+jwt_sec = os.getenv("JWT_SECRET")
 
 
 class User(db.Model):
@@ -49,6 +56,9 @@ class CompanySchema(Schema):
     following = fields.Int(required=True)
     donation = fields.Int(required=True)
 
+user_schema = UserSchema()
+users_schema = UserSchema(many=True)
+
 company_schema = CompanySchema()
 company_schemas = CompanySchema(many=True)
 
@@ -57,6 +67,25 @@ with app.app_context():
     print("Pre flight check  " + str(app.name))
     db.create_all()    
     print("Database Initialized")
+
+
+
+@app.route('/token', methods=['POST'])
+def token_gen():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    user = User.query.filter_by(username=username).first()
+    
+    if user and username=="admin_mon":
+        if bcrypt.check_password_hash(user.password, password):
+            token = jwt.encode({'username': username,'isAdmin':'true', 'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30)}, jwt_sec, algorithm="HS256")
+            return jsonify({'token': token})
+        else:
+            return jsonify({'message': 'wrong pass or your are not admin'}),403
+    else:
+        return jsonify({'message': 'user not found'}),404
+
 
 
 @app.route('/register', methods=['POST'])
@@ -78,6 +107,7 @@ def register():
 def add_company():
     
     data = request.get_json()
+    jwt_1 = data.get('jwt')
     admin_token = data.get('admin_token')
     name = data.get('name')
     ceo = data.get('ceo')
@@ -88,13 +118,19 @@ def add_company():
     following = data.get('following')
     donation = data.get('donation')
     new_company = Company(name=name, ceo=ceo, cto=cto, address=address, email=email, website=website, following=following, donation=donation)
-    try:
-        db.session.add(new_company)
-        db.session.commit()
-        return jsonify({'message': 'Company added successfully'}),200
-    except IntegrityError as e:
-        print(e)
-        return jsonify({'message': 'Company is already there'}),403
+    jwt_decode = jwt.decode(jwt_1, jwt_sec, algorithms="HS256")
+    if jwt_decode is not None:
+        if jwt_decode['isAdmin'] == 'true':
+            try:
+                db.session.add(new_company)
+                db.session.commit()
+                return jsonify({'message': 'Company added successfully'}),200
+            except IntegrityError as e:
+                print(e)
+                return jsonify({'message': 'Company is already there'}),403
+        else:
+            return jsonify({'message': 'You are not admin'}),403
+    return jsonify({'message': 'You are not admin'}),403
     
 
 
