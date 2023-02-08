@@ -68,6 +68,9 @@ with app.app_context():
     db.create_all()    
     print("Database Initialized")
 
+@app.route('/')
+def hello_world():
+    return 'Hello, World!'
 
 
 @app.route('/token', methods=['POST'])
@@ -132,6 +135,7 @@ def add_company():
             return jsonify({'message': 'You are not admin'}),403
     return jsonify({'message': 'You are not admin'}),403
     
+
 
 
 @app.route('/get_company/<id>', methods=['GET'])
