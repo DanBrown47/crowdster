@@ -10,7 +10,7 @@ import jwt
 from dotenv import load_dotenv
 from flask_cors import CORS
 
-
+ 
 app = Flask(__name__)
 CORS(app)
 bcrypt = Bcrypt(app)
@@ -67,7 +67,7 @@ company_schemas = CompanySchema(many=True)
 with app.app_context():
     print("Pre flight check  " + str(app.name))
     db.create_all()    
-    print("Database Initialized")
+    print("Database Initialized.")
 
 @app.route('/')
 def hello_world():
@@ -123,7 +123,8 @@ def add_company():
     donation = data.get('donation')
     new_company = Company(name=name, ceo=ceo, cto=cto, address=address, email=email, website=website, following=following, donation=donation)
     try:
-        jwt_decode = jwt.decode(jwt_1, jwt_sec, algorithms="HS256")
+
+        jwt_decode = jwt.decode(jwt_1, jwt_sec, algorithms=["HS256"])
     except jwt.exceptions.DecodeError as e:
         print(e)
         return jsonify({'message': 'JWT NOT GOOD '}),418
