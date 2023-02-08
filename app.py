@@ -8,10 +8,11 @@ import os
 import datetime
 import jwt
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 
 app = Flask(__name__)
-# CORS(app)
+CORS(app)
 bcrypt = Bcrypt(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY']='Lolalolalolla'
@@ -121,7 +122,11 @@ def add_company():
     following = data.get('following')
     donation = data.get('donation')
     new_company = Company(name=name, ceo=ceo, cto=cto, address=address, email=email, website=website, following=following, donation=donation)
-    jwt_decode = jwt.decode(jwt_1, jwt_sec, algorithms="HS256")
+    try:
+        jwt_decode = jwt.decode(jwt_1, jwt_sec, algorithms="HS256")
+    except jwt.exceptions.DecodeError as e:
+        print(e)
+        return jsonify({'message': 'JWT NOT GOOD '}),418
     if jwt_decode is not None:
         if jwt_decode['isAdmin'] == 'true':
             try:
