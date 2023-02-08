@@ -22,7 +22,7 @@ jobs:
       - name: Build image
         run: docker build . --tag $IMAGE_NAME
       - name: Log into registry
-        run: sudo /usr/bin/docker login -u ${{ github.actor }} -p ${{ secrets.TOKEN }} ghcr.io
+        run: docker login -u DanBrown47 -p ${{ secrets.TOKEN }} ghcr.io
       - name: Push image
         run: |
           IMAGE_ID=ghcr.io/${{ github.repository }}/$IMAGE_NAME
